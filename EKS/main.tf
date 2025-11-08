@@ -69,10 +69,17 @@ module "eks" {
     Terraform   = "true"
   }
 }
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_name
-}
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+  version = "~> 20.0"
+  manage_aws_auth_configmap = true
+  create_aws_auth_configmap = true
 
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
+  aws_auth_roles = [
+    {
+      rolearn  = "arn:aws:iam::003083321417:role/JenkinsTerraformRole"
+      username = "jenkins"
+      groups   = ["system:masters"]
+    },
+  ]
 }
