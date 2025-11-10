@@ -14,7 +14,6 @@ resource "aws_iam_role" "jenkins_role" {
   })
 
   tags = {
-    Name      = "jenkins-eks-role"
     Terraform = "true"
   }
 }
@@ -49,4 +48,10 @@ resource "aws_iam_instance_profile" "jenkins_profile" {
     Name      = "jenkins-eks-profile"
     Terraform = "true"
   }
+}
+
+# Attach required policies to the role
+resource "aws_iam_role_policy_attachment" "jenkins_eks_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.jenkins_role.name
 }
