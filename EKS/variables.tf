@@ -18,5 +18,8 @@ variable "private_subnets" {
   type        = list(string)
 }
 
-
-
+# ADD THIS VARIABLE
+variable "jenkins_role_arn" {
+  description = "ARN of Jenkins IAM role for EKS access"
+  type        = string
+}

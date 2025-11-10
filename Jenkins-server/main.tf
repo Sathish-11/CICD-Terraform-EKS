@@ -77,7 +77,8 @@ module "ec2_instance" {
   monitoring             = true
   subnet_id              = module.vpc.public_subnets[0]
   vpc_security_group_ids = [module.sg.security_group_id]
-  user_data = file("userdata.sh")
+  user_data              = file("userdata.sh")
+  iam_instance_profile   = aws_iam_instance_profile.jenkins_profile.name
 
   tags = {
     Terraform   = "true"

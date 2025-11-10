@@ -1,10 +1,9 @@
 #Create VPC for EKS cluster
-
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  name = "eks_cluster_vpc"
-  cidr = var.vpc_cidr
+  name    = "eks_cluster_vpc"
+  cidr    = var.vpc_cidr
 
   azs             = data.aws_availability_zones.azs.names
   public_subnets  = var.public_subnets
@@ -24,7 +23,7 @@ module "vpc" {
   }
   private_subnet_tags = {
     "kubernetes.io/cluster/eks-cluster" = "shared"
-    "kubernetes.io/role/internal-elb"    = "1"
+    "kubernetes.io/role/internal-elb"   = "1"
   }
 }
 
@@ -40,10 +39,28 @@ module "eks" {
   vpc_id                         = module.vpc.vpc_id
   subnet_ids                     = module.vpc.private_subnets
 
+  # Grant Jenkins IAM role access to EKS (ADD THIS SECTION)
+  enable_cluster_creator_admin_permissions = true
+
+  access_entries = {
+    jenkins = {
+      principal_arn = var.jenkins_role_arn
+
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
+
   # EKS Managed Node Group(s)
   eks_managed_node_groups = {
     nodes = {
-      name          = "eks-nodes"
+      name           = "eks-nodes"
       instance_types = [var.instance_type]
       min_size       = 1
       max_size       = 3
@@ -51,7 +68,8 @@ module "eks" {
       disk_size      = 20
     }
   }
-   # Added recommended EKS addons
+
+  # Added recommended EKS addons
   cluster_addons = {
     coredns = {
       most_recent = true
@@ -69,17 +87,11 @@ module "eks" {
     Terraform   = "true"
   }
 }
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version = "~> 20.0"
-  manage_aws_auth_configmap = true
-  create_aws_auth_configmap = true
 
-  aws_auth_roles = [
-    {
-      rolearn  = "arn:aws:iam::003083321417:role/JenkinsTerraformRole"
-      username = "jenkins"
-      groups   = ["system:masters"]
-    },
-  ]
+data "aws_eks_cluster" "cluster" {
+  name = module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
 }
