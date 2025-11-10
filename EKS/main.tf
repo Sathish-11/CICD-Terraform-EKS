@@ -48,14 +48,6 @@ module "eks" {
     # Remove access_entries completely
   access_entries = {}
 
-  aws_auth_users = [
-    {
-      userarn  = "arn:aws:iam::003083321417:role/jenkins-eks-role"
-      username = "jenkins"
-      groups   = ["system:masters"]
-    }
-  ]
-
 
   eks_managed_node_groups = {
     nodes = {
@@ -92,3 +84,29 @@ data "aws_eks_cluster_auth" "cluster" {
 }
 
 data "aws_caller_identity" "current" {}
+
+# Manual AWS Auth ConfigMap for Jenkins access
+resource "kubernetes_config_map" "aws_auth" {
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
+
+  data = {
+    "mapRoles" = yamlencode([
+      {
+        rolearn  = "arn:aws:iam::003083321417:role/jenkins-eks-role"
+        username = "jenkins"
+        groups   = ["system:masters"]
+      },
+      {
+        rolearn  = module.eks.cluster_iam_role_arn
+        username = "system:node:{{EC2PrivateDNSName}}"
+        groups   = ["system:bootstrappers", "system:nodes"]
+      }
+    ])
+  }
+
+  depends_on = [module.eks]
+}
+
