@@ -46,27 +46,8 @@ module "eks" {
 
   enable_cluster_creator_admin_permissions = false
 
-  access_entries = {
-    cluster_creator = {
-      principal_arn = var.cluster_creator_role_arn # Correct IAM Role ARN
-      policy_associations = {
-        admin = {
-          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = { type = "cluster" }
-        }
-      }
-    }
 
-    jenkins = {
-      principal_arn = var.jenkins_role_arn # Jenkins IAM Role ARN
-      policy_associations = {
-        admin = {
-          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = { type = "cluster" }
-        }
-      }
-    }
-  }
+
 
   eks_managed_node_groups = {
     nodes = {

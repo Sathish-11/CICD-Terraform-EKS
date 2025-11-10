@@ -18,25 +18,49 @@ resource "aws_iam_role" "jenkins_role" {
   }
 }
 
-# Attach AWS managed policies (no custom JSON needed)
-resource "aws_iam_role_policy_attachment" "eks_worker" {
+# Essential EKS Management Policies
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  role       = aws_iam_role.jenkins_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
   role       = aws_iam_role.jenkins_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "eks_cni" {
+resource "aws_iam_role_policy_attachment" "eks_cni_policy" {
   role       = aws_iam_role.jenkins_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
-resource "aws_iam_role_policy_attachment" "ec2_read" {
+# ECR Access for Docker images
+resource "aws_iam_role_policy_attachment" "ecr_read_only" {
+  role       = aws_iam_role.jenkins_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+# Additional policies for full EKS management
+resource "aws_iam_role_policy_attachment" "eks_service_policy" {
+  role       = aws_iam_role.jenkins_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_read_only" {
   role       = aws_iam_role.jenkins_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
 }
 
-resource "aws_iam_role_policy_attachment" "ecr_read" {
+# S3 Access for Terraform state (if using S3 backend)
+resource "aws_iam_role_policy_attachment" "s3_full_access" {
   role       = aws_iam_role.jenkins_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
+# IAM ReadOnly access for managing roles
+resource "aws_iam_role_policy_attachment" "iam_read_only" {
+  role       = aws_iam_role.jenkins_role.name
+  policy_arn = "arn:aws:iam::aws:policy/IAMReadOnlyAccess"
 }
 
 # Create instance profile
@@ -48,10 +72,4 @@ resource "aws_iam_instance_profile" "jenkins_profile" {
     Name      = "jenkins-eks-profile"
     Terraform = "true"
   }
-}
-
-# Attach required policies to the role
-resource "aws_iam_role_policy_attachment" "jenkins_eks_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.jenkins_role.name
 }
