@@ -23,3 +23,8 @@ variable "jenkins_role_arn" {
   description = "ARN of Jenkins IAM role for EKS access"
   type        = string
 }
+
+variable "cluster_creator_role_arn" {
+  type        = string
+  description = "IAM role ARN of the user/role that will be cluster admin"
+}
