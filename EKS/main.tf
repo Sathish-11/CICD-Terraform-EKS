@@ -45,8 +45,16 @@ module "eks" {
   subnet_ids                     = module.vpc.private_subnets
 
   enable_cluster_creator_admin_permissions = false
+    # Remove access_entries completely
+  access_entries = {}
 
-
+  aws_auth_users = [
+    {
+      userarn  = "arn:aws:iam::003083321417:role/jenkins-eks-role"
+      username = "jenkins"
+      groups   = ["system:masters"]
+    }
+  ]
 
 
   eks_managed_node_groups = {
