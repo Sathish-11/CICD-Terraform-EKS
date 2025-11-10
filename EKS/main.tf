@@ -40,12 +40,25 @@ module "eks" {
   subnet_ids                     = module.vpc.private_subnets
 
   # Grant Jenkins IAM role access to EKS (ADD THIS SECTION)
-  enable_cluster_creator_admin_permissions = true
-
+  enable_cluster_creator_admin_permissions = false
+  
   access_entries = {
+    cluster_creator = {
+      principal_arn = data.aws_caller_identity.current.arn
+      
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+
     jenkins = {
       principal_arn = var.jenkins_role_arn
-
+      
       policy_associations = {
         admin = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
@@ -68,7 +81,7 @@ module "eks" {
       disk_size      = 20
     }
   }
-
+  
   # Added recommended EKS addons
   cluster_addons = {
     coredns = {
@@ -87,3 +100,13 @@ module "eks" {
     Terraform   = "true"
   }
 }
+
+data "aws_eks_cluster" "cluster" {
+  name = module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
+
+data "aws_caller_identity" "current" {}
